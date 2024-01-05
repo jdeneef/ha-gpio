@@ -20,8 +20,6 @@ The `gpio` binary sensor platform allows you to read sensor values of the GPIOs 
 
 ### Configuration
 
-[Legacy binary sensor configuration](https://codeberg.org/raboof/ha-gpio/blob/main/legacy-config.md#binary-sensor)
-
 To use your device's GPIO in your installation, add the following to your `configuration.yaml` file:
 
 ```yaml
@@ -128,8 +126,6 @@ If you don't have Home Assistant running on your device and you want to use it a
 The `gpio` switch platform allows you to control the GPIOs of your device.
 
 ### Configuration
-
-[Legacy switch configuration](https://codeberg.org/raboof/ha-gpio/blob/main/legacy-config.md#switch)
 
 To use your device's GPIO in your installation, add the following to your `configuration.yaml` file:
 
