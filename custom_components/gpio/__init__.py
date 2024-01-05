@@ -1,4 +1,4 @@
-"""Support for controlling GPIO pins of a Raspberry Pi."""
+"""Support for controlling GPIO pins of a device."""
 
 from collections import defaultdict
 
@@ -13,7 +13,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
-DOMAIN = "rpi_gpio"
+DOMAIN = "gpio"
 PLATFORMS = [
     Platform.BINARY_SENSOR,
     Platform.COVER,
@@ -26,7 +26,7 @@ gpiod_config = defaultdict(gpiod.LineSettings)
 gpiod_lines = None
 
 def setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the Raspberry PI GPIO component."""
+    """Set up the GPIO component."""
 
     def cleanup_gpio(event):
         """Stuff to do before stopping."""
@@ -50,7 +50,7 @@ def update_gpiod_lines():
 
     gpiod_lines = gpiod.request_lines(
         "/dev/gpiochip0",
-        consumer="ha-rpi_gpio",
+        consumer="ha-gpio",
         config=gpiod_config)
 
 def setup_output(port):
