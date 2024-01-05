@@ -33,7 +33,7 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
         global gpiod_config, gpiod_lines
         gpiod_config.clear()
         if gpiod_lines:
-            gpiod_lines.close()
+            gpiod_lines.__exit__()
 
     def prepare_gpio(event):
         """Stuff to do when Home Assistant starts."""
