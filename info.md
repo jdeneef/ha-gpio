@@ -2,8 +2,6 @@
 
 **This is a spin-off from the [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio) integration, adapted to work with libgpiod2 instead.**
 
-This fork is still a work in progress, it is not currently functional.
-
 The `gpio` integration supports the following platforms: `Binary Sensor`, `Cover`, `Switch`
 
 ## Binary Sensor
