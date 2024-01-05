@@ -55,7 +55,7 @@ binary_sensor:
 
 | Key            | Required | Default               | Type    | Description                                                                                                 |
 | -------------- | -------- | --------------------- | --------|------------------------------------------------------------------------------------------------------------ |
-| `sensors`      | yes      |                       | list    | List of sensor IO ports ([RPi BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
+| `sensors`      | yes      |                       | list    | List of sensor IO ports ([Raspberry Pi BCM mode pin numbers](https://pinout.xyz/resources/raspberry-pi-pinout.png))      |
 | `name`         | yes      |                       | string  | The name for the binary sensor entity                                                                       |
 | `unique_id`    | no       |                       | string  | An ID that uniquely identifies the sensor. Set this to a unique value to allow customization through the UI |
 | `bouncetime`   | no       | `50`                  | integer | The time in milliseconds for port debouncing                                                                |
