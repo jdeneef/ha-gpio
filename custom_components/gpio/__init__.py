@@ -46,7 +46,7 @@ def update_gpiod_lines():
     global gpiod_config, gpiod_lines
 
     if gpiod_lines:
-        gpiod_lines.__exit__()
+        gpiod_lines.release()
 
     gpiod_lines = gpiod.request_lines(
         "/dev/gpiochip0",
