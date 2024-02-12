@@ -1,6 +1,7 @@
 """Support for controlling GPIO pins of a device."""
 
 from collections import defaultdict
+from datetime import timedelta
 
 import gpiod
 import time
@@ -42,21 +43,32 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.bus.listen_once(EVENT_HOMEASSISTANT_START, prepare_gpio)
     return True
 
+def device_name():
+    for id in range(5):
+        device_name = f"/dev/gpiochip{id}"
+        is_device = gpiod.is_gpiochip_device(device_name)
+        if is_device:
+            with gpiod.Chip(device_name) as chip:
+                info = chip.get_info()
+                if "pinctrl" in info.label:
+                    return device_name
+
 def update_gpiod_lines():
     global gpiod_config, gpiod_lines
-
+    
     if gpiod_lines:
         gpiod_lines.release()
 
     gpiod_lines = gpiod.request_lines(
-        "/dev/gpiochip0",
+        device_name(),
         consumer="ha-gpio",
         config=gpiod_config)
 
-def setup_output(port):
+def setup_output(port, invert_logic):
     """Set up a GPIO as output."""
     global gpiod_config
     gpiod_config[port].direction = gpiod.line.Direction.OUTPUT
+    gpiod_config[port].output_value = gpiod.line.Value.ACTIVE if invert_logic else gpiod.line.Value.INACTIVE
 
     update_gpiod_lines()
 
@@ -78,6 +90,14 @@ def read_input(port):
     global gpiod_lines
     return gpiod_lines.get_value(port) == gpiod.line.Value.ACTIVE
 
-def edge_detect(port, event_callback, bounce):
+def edge_detect(port, bounce):
     """Add detection for RISING and FALLING events."""
-    # TODO
+    global gpiod_config
+    global gpiod_lines
+
+    gpiod_config[port].edge_detection = gpiod.line.Edge.BOTH
+    gpiod_config[port].bias = gpiod.line.Bias.PULL_UP
+    gpiod_config[port].debounce_period = timedelta(milliseconds=bounce)
+    gpiod_config[port].event_clock = gpiod.line.Clock.REALTIME
+    
+    return gpiod_lines.wait_edge_events(timedelta(milliseconds=500))
