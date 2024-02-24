@@ -1,5 +1,8 @@
 """Support for controlling GPIO pins of a device."""
 
+import logging
+_LOGGER = logging.getLogger(__name__)
+
 from collections import defaultdict
 from datetime import timedelta
 
@@ -7,8 +10,6 @@ import gpiod
 import time
 
 from homeassistant.const import (
-    EVENT_HOMEASSISTANT_START,
-    EVENT_HOMEASSISTANT_STOP,
     Platform,
 )
 from homeassistant.core import HomeAssistant
@@ -25,25 +26,27 @@ PLATFORMS = [
 # are global in very physical sense it might be fine.
 gpiod_config = defaultdict(gpiod.LineSettings)
 gpiod_lines = None
+gpio_chip = None
 
-def setup(hass: HomeAssistant, config: ConfigType) -> bool:
+def setup_entry(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the GPIO component."""
-
-    def cleanup_gpio(event):
-        """Stuff to do before stopping."""
-        global gpiod_config, gpiod_lines
-        gpiod_config.clear()
-        if gpiod_lines:
-            gpiod_lines.release()
-
-    def prepare_gpio(event):
-        """Stuff to do when Home Assistant starts."""
-        hass.bus.listen_once(EVENT_HOMEASSISTANT_STOP, cleanup_gpio)
-
-    hass.bus.listen_once(EVENT_HOMEASSISTANT_START, prepare_gpio)
+    global device_name
+    _LOGGER.info("ha_gpio is initialized")
+    gpio_chip = discover_gpiochip()
+    _LOGGER.info("initialized gpiochip: {gpio_chip}")
     return True
 
-def device_name():
+def unload_entry(hass: HomeAssistant, entry) -> bool:
+    """Stuff to do before stopping."""
+    global gpiod_config, gpiod_lines
+    _LOGGER.info("ha_gpio is being unloaded: {gpiod_lines}")
+
+    gpiod_config.clear()
+    if gpiod_lines:
+      gpiod_lines.release()
+    return True
+
+def discover_gpiochip():
     for id in range(5):
         device_name = f"/dev/gpiochip{id}"
         is_device = gpiod.is_gpiochip_device(device_name)
@@ -54,18 +57,20 @@ def device_name():
                     return device_name
 
 def update_gpiod_lines():
-    global gpiod_config, gpiod_lines
+    global gpiod_config, gpiod_lines, gpio_chip
+    _LOGGER.debug("update_gpiod_lines: {gpiod_config}")
     
     if gpiod_lines:
         gpiod_lines.release()
 
     gpiod_lines = gpiod.request_lines(
-        device_name(),
+        gpio_chip,
         consumer="ha-gpio",
         config=gpiod_config)
 
 def setup_output(port, invert_logic):
     """Set up a GPIO as output."""
+    _LOGGER.info(f"setup_output: {port}, {invert_logic}")
     global gpiod_config
     gpiod_config[port].direction = gpiod.line.Direction.OUTPUT
     gpiod_config[port].output_value = gpiod.line.Value.ACTIVE if invert_logic else gpiod.line.Value.INACTIVE
@@ -74,6 +79,7 @@ def setup_output(port, invert_logic):
 
 def setup_input(port, pull_mode):
     """Set up a GPIO as input."""
+    _LOGGER.info(f"setup_input: { port }, { pull_mode }")
     global gpiod_config
     gpiod_config[port].direction = gpiod.line.Direction.INPUT
     gpiod_config[port].bias = gpiod.line.Bias.PULL_DOWN if pull_mode == "DOWN" else gpiod.line.Bias.PULL_UP
@@ -82,16 +88,19 @@ def setup_input(port, pull_mode):
 
 def write_output(port, value):
     """Write a value to a GPIO."""
+    _LOGGER.debug(f"write_output: { port }, { value }")
     global gpiod_lines
     gpiod_lines.set_value(port, gpiod.line.Value.ACTIVE if value else gpiod.line.Value.INACTIVE)
 
 def read_input(port):
     """Read a value from a GPIO."""
+    _LOGGER.debug(f"read_output: { port }")
     global gpiod_lines
     return gpiod_lines.get_value(port) == gpiod.line.Value.ACTIVE
 
 def edge_detect(port, bounce):
     """Add detection for RISING and FALLING events."""
+    _LOGGER.info(f"edge_detect: { port }, { bounce }")
     global gpiod_config
     global gpiod_lines
 

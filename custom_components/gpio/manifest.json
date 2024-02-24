@@ -5,6 +5,6 @@
   "documentation": "https://codeberg.org/raboof/ha-gpio",
   "iot_class": "local_push",
   "issue_tracker": "https://codeberg.org/raboof/ha-gpio/issues",
-  "requirements": ["gpiod>=2.0.0"],
+  "requirements": ["gpiod>=2.0.2"],
   "version": "2022.7.0"
 }

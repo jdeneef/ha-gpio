@@ -17,7 +17,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.reload import setup_reload_service
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import DOMAIN, PLATFORMS, setup_output, write_output
+from . import DOMAIN, PLATFORMS, _LOGGER, setup_output, write_output
 
 CONF_PULL_MODE = "pull_mode"
 CONF_PORTS = "ports"
@@ -65,6 +65,7 @@ def setup_platform(
     switches_conf = config.get(CONF_SWITCHES)
     if switches_conf is not None:
         for switch in switches_conf:
+            _LOGGER.debug(f"adding switch: {switch}")
             switches.append(
                 GPIOSwitch(
                     switch[CONF_NAME],
