@@ -1,5 +1,6 @@
 """Support for binary sensor using GPIO."""
 from __future__ import annotations
+from . import _LOGGER
 from datetime import timedelta
 
 import asyncio
@@ -21,7 +22,8 @@ from homeassistant.helpers.reload import setup_reload_service
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.event import async_track_time_interval
 
-from . import DOMAIN, PLATFORMS, edge_detect, read_input, setup_input
+from . import DOMAIN, PLATFORMS
+# edge_detect, read_input, setup_input
 
 CONF_BOUNCETIME = "bouncetime"
 CONF_INVERT_LOGIC = "invert_logic"
@@ -68,6 +70,8 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the GPIO devices."""
+    _LOGGER.debug(f"initializing sensor {config}")
+    return
     setup_reload_service(hass, DOMAIN, PLATFORMS)
 
     sensors = []
@@ -118,10 +122,10 @@ class GPIOBinarySensor(BinarySensorEntity):
         # stop the timer
         self.async_on_remove(timer_cancel)
 
-    async def update_gpio(self, _):
-        if edge_detect(self._port, self._bouncetime) is True:
-            self._state = read_input(self._port)
-        self.async_write_ha_state()
+    # async def update_gpio(self, _):
+        # if edge_detect(self._port, self._bouncetime) is True:
+            # self._state = read_input(self._port)
+        # self.async_write_ha_state()
 
     def __init__(self, name, port, pull_mode, bouncetime, invert_logic, unique_id=None):
         """Initialize the binary sensor."""
@@ -134,9 +138,9 @@ class GPIOBinarySensor(BinarySensorEntity):
         self._invert_logic = invert_logic
         self._state = None
 
-        setup_input(self._port, self._pull_mode)
+        # setup_input(self._port, self._pull_mode)
 
-        event = edge_detect(self._port, self._bouncetime)
+        # event = edge_detect(self._port, self._bouncetime)
 
     @property
     def is_on(self):
@@ -145,4 +149,4 @@ class GPIOBinarySensor(BinarySensorEntity):
 
     def update(self):
         """Update the GPIO state."""
-        self._state = read_input(self._port)
+        # self._state = read_input(self._port)

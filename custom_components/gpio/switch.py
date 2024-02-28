@@ -1,5 +1,6 @@
 """Allows to configure a switch using GPIO."""
 from __future__ import annotations
+from . import _LOGGER
 
 import voluptuous as vol
 
@@ -17,7 +18,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.reload import setup_reload_service
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import DOMAIN, PLATFORMS, _LOGGER, setup_output, write_output
+from . import DOMAIN, PLATFORMS, _LOGGER
+
+import gpiod
+from gpiod.line import Bias, Direction, Value
 
 CONF_PULL_MODE = "pull_mode"
 CONF_PORTS = "ports"
@@ -58,37 +62,46 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the GPIO devices."""
-    setup_reload_service(hass, DOMAIN, PLATFORMS)
+    _LOGGER.debug(f"initializing switch {config}")
+    _LOGGER.debug(f"hass.data: {hass.data[DOMAIN]}")
+    # setup_reload_service(hass, DOMAIN, PLATFORMS)
 
     switches = []
-
     switches_conf = config.get(CONF_SWITCHES)
-    if switches_conf is not None:
-        for switch in switches_conf:
-            _LOGGER.debug(f"adding switch: {switch}")
-            switches.append(
-                GPIOSwitch(
-                    switch[CONF_NAME],
-                    switch[CONF_PORT],
-                    switch[CONF_INVERT_LOGIC],
-                    switch.get(CONF_UNIQUE_ID),
-                )
-            )
-
-        add_entities(switches, True)
+    if switches_conf is None:
         return
+    for switch in switches_conf:
+        _LOGGER.debug(f"adding switch: {switch}")
+        switches.append(
+            GPIOSwitch(
+                switch[CONF_NAME],
+                switch[CONF_PORT],
+                switch[CONF_INVERT_LOGIC],
+                switch.get(CONF_UNIQUE_ID),
+            )
+        )
+        hass.data[DOMAIN]['config'][switch[CONF_PORT]].direction = Direction.OUTPUT
+        hass.data[DOMAIN]['config'][switch[CONF_PORT]].output_value = Value.ACTIVE if switch[CONF_INVERT_LOGIC] else Value.INACTIVE
 
-    invert_logic = config[CONF_INVERT_LOGIC]
+    add_entities(switches, True)
+    if hass.data[DOMAIN]['lines']:
+        hass.data[DOMAIN]['lines'].release()
+    hass.data[DOMAIN]['lines'] = gpiod.request_lines(
+        hass.data[DOMAIN]['path'],
+        consumer = "ha-gpio",
+        config = hass.data[DOMAIN]['config']
+    )
+    _LOGGER.debug(f"data: {hass.data[DOMAIN]}")
+    return
 
-    ports = config[CONF_PORTS]
-    for port, name in ports.items():
-        switches.append(GPIOSwitch(name, port, invert_logic))
-
-    add_entities(switches)
-
+    # invert_logic = config[CONF_INVERT_LOGIC]
+    # ports = config[CONF_PORTS]
+    # for port, name in ports.items():
+        # switches.append(GPIOSwitch(name, port, invert_logic))
+    # add_entities(switches)
 
 class GPIOSwitch(SwitchEntity):
-    """Representation of a GPIO."""
+    """Representation of a GPIO Switch."""
 
     def __init__(self, name, port, invert_logic, unique_id=None):
         """Initialize the pin."""
@@ -98,7 +111,11 @@ class GPIOSwitch(SwitchEntity):
         self._port = port
         self._invert_logic = invert_logic
         self._state = False
-        setup_output(self._port, self._invert_logic) 
+
+    @property
+    def name(self) -> str:
+        """Return name of the sensor."""
+        return self._attr_name
 
     @property
     def is_on(self):
@@ -107,12 +124,18 @@ class GPIOSwitch(SwitchEntity):
 
     def turn_on(self, **kwargs):
         """Turn the device on."""
-        write_output(self._port, 0 if self._invert_logic else 1)
+        # write_output(self._port, 0 if self._invert_logic else 1)
+        value = Value.INACTIVE if self._invert_logic else Value.ACTIVE
+        _LOGGER.debug(f"write_output: { self._port }, {value}")
+        self.hass.data[DOMAIN]['lines'].set_value(self._port, value)
         self._state = True
         self.schedule_update_ha_state()
 
     def turn_off(self, **kwargs):
         """Turn the device off."""
-        write_output(self._port, 1 if self._invert_logic else 0)
+        # write_output(self._port, 1 if self._invert_logic else 0)
+        value = Value.ACTIVE if self._invert_logic else Value.INACTIVE
+        _LOGGER.debug(f"write_output: { self._port }, {value}")
+        self.hass.data[DOMAIN]['lines'].set_value(self._port, value)
         self._state = False
         self.schedule_update_ha_state()
