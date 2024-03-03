@@ -69,67 +69,6 @@ binary_sensor:
 
 For more details about the Raspberry Pi GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 
-<--
-## Cover
-
-The `gpio` cover platform allows you to use your device to control your cover such as Garage doors.
-
-It uses two pins on the device.
-
-- The `state_pin` will detect if the cover is closed, and
-- the `relay_pin` will trigger the cover to open or close.
-
-Although you do not need Andrews Hilliday's software controller when you run Home Assistant, he has written clear instructions on how to hook your garage door and sensors up to a Raspberry Pi, which can be found [here](https://github.com/andrewshilliday/garage-door-controller#hardware-setup).
-
-### Configuration
-
-To enable GPIO Covers in your installation, add the following to your `configuration.yaml` file:
-
-```yaml
-# Basic configuration.yaml entry
-cover:
-  - platform: gpio
-    covers:
-      - relay_pin: 10
-        state_pin: 11
-```
-
-```yaml
-# Full configuration.yaml entry
-cover:
-  - platform: gpio
-    relay_time: 0.2
-    invert_relay: false
-    state_pull_mode: "UP"
-    invert_state: true
-    covers:
-      - relay_pin: 10
-        state_pin: 11
-      - relay_pin: 12
-        state_pin: 13
-        name: "Right door"
-        unique_id: "right_door_cover_port_13"
-```
-
-### Options
-
-| Key               | Required | Default | Type    | Description                                                                                                |
-| ----------------- | -------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------- |
-| `relay_time`      | no       | `0.2`   | float   | The time that the relay will be on for in seconds                                                          |
-| `invert_relay`    | no       | `false` | boolean | Invert the relay pin output so that it is active-high (True)                                               |
-| `state_pull_mode` | no       | `UP`    | string  | The direction the State pin is pulling. It can be `UP` or `DOWN`                                           |
-| `invert_state`    | no       | `false` | boolean | Invert the value of the State pin so that 0 means closed                                                   |
-| `covers`          | yes      |         | list    | List of covers                                                                                             |
-| `relay_pin`       | yes      |         | integer | The pin of your Raspberry Pi where the relay is connected                                                  |
-| `state_pin`       | yes      |         | integer | The pin of your Raspberry Pi to retrieve the state                                                         |
-| `name`            | no       |         | string  | The name for the cover entity                                                                              |
-| `unique_id`       | no       |         | string  | An ID that uniquely identifies the cover. Set this to a unique value to allow customization through the UI |
-
-### Remote GPIO Cover
-
-If you don't have Home Assistant running on your device and you want to use it as a remote cover instead, there is a project called [GarageQTPi](https://github.com/Jerrkawz/GarageQTPi) that will work remotely with the [MQTT Cover Component](/integrations/cover.mqtt/). Follow the GitHub instructions to install and configure GarageQTPi and once configured follow the Home Assistant instructions to configure the MQTT Cover.
--->
-
 ## Switch
 
 The `gpio` switch platform allows you to control the GPIOs of your device.
