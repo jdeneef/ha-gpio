@@ -1,6 +1,6 @@
 # Home Assistant GPIO custom integration
 
-**This is a spin-off from the [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio) integration, adapted to work with libgpiod2 instead.**
+**This is a spin-off from the [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio) integration, adapted in [ha-gpio](https://codeberg.org/raboof/ha-gpio) to work with libgpiod2 instead and partially redone by me to get the button event driven and some cleanups **
 
 The `gpio` integration supports the following platforms: `Binary Sensor` and `Switch`
 
