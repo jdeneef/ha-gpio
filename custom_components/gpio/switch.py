@@ -11,25 +11,23 @@ from homeassistant.const import (
     CONF_SWITCHES,
     CONF_UNIQUE_ID,
     DEVICE_DEFAULT_NAME,
+    EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.reload import setup_reload_service
+# from homeassistant.helpers.reload import setup_reload_service
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.entity import generate_entity_id
 
-from . import DOMAIN, PLATFORMS, _LOGGER
+from . import DOMAIN, _LOGGER
 
 import gpiod
-from gpiod.line import Bias, Direction, Value
+from gpiod.line import Direction, Value
 
-CONF_PULL_MODE = "pull_mode"
 CONF_PORTS = "ports"
 CONF_INVERT_LOGIC = "invert_logic"
-
 DEFAULT_INVERT_LOGIC = False
-
-_SWITCHES_LEGACY_SCHEMA = vol.Schema({cv.positive_int: cv.string})
 
 _SWITCH_SCHEMA = vol.Schema(
     {
@@ -40,11 +38,9 @@ _SWITCH_SCHEMA = vol.Schema(
     }
 )
 
-
 PLATFORM_SCHEMA = vol.All(
     PLATFORM_SCHEMA.extend(
         {
-            vol.Exclusive(CONF_PORTS, CONF_SWITCHES): _SWITCHES_LEGACY_SCHEMA,
             vol.Exclusive(CONF_SWITCHES, CONF_SWITCHES): vol.All(
                 cv.ensure_list, [_SWITCH_SCHEMA]
             ),
@@ -54,16 +50,14 @@ PLATFORM_SCHEMA = vol.All(
     cv.has_at_least_one_key(CONF_PORTS, CONF_SWITCHES),
 )
 
-
-def setup_platform(
+async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    add_entities: AddEntitiesCallback,
+    async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up the GPIO devices."""
-    _LOGGER.debug(f"initializing switch {config}")
-    _LOGGER.debug(f"hass.data: {hass.data[DOMAIN]}")
+    """Set up the GPIO switches."""
+    _LOGGER.debug(f"initializing switches {config}")
     # setup_reload_service(hass, DOMAIN, PLATFORMS)
 
     switches = []
@@ -80,25 +74,22 @@ def setup_platform(
                 switch.get(CONF_UNIQUE_ID),
             )
         )
-        hass.data[DOMAIN]['config'][switch[CONF_PORT]].direction = Direction.OUTPUT
-        hass.data[DOMAIN]['config'][switch[CONF_PORT]].output_value = Value.ACTIVE if switch[CONF_INVERT_LOGIC] else Value.INACTIVE
 
-    add_entities(switches, True)
+        # add switch to gpiod config
+        hass.data[DOMAIN]['config'][switch[CONF_PORT]] = gpiod.LineSettings(
+            direction = Direction.OUTPUT,
+            output_value = Value.ACTIVE if switch[CONF_INVERT_LOGIC] else Value.INACTIVE
+        )
+
+    async_add_entities(switches, True)
     if hass.data[DOMAIN]['lines']:
         hass.data[DOMAIN]['lines'].release()
     hass.data[DOMAIN]['lines'] = gpiod.request_lines(
         hass.data[DOMAIN]['path'],
-        consumer = "ha-gpio",
+        consumer = DOMAIN,
         config = hass.data[DOMAIN]['config']
     )
-    _LOGGER.debug(f"data: {hass.data[DOMAIN]}")
     return
-
-    # invert_logic = config[CONF_INVERT_LOGIC]
-    # ports = config[CONF_PORTS]
-    # for port, name in ports.items():
-        # switches.append(GPIOSwitch(name, port, invert_logic))
-    # add_entities(switches)
 
 class GPIOSwitch(SwitchEntity):
     """Representation of a GPIO Switch."""
@@ -111,6 +102,7 @@ class GPIOSwitch(SwitchEntity):
         self._port = port
         self._invert_logic = invert_logic
         self._state = False
+        self.entity_id = generate_entity_id("sensor.{}", self._attr_name, [], self.hass)
 
     @property
     def name(self) -> str:
@@ -118,24 +110,27 @@ class GPIOSwitch(SwitchEntity):
         return self._attr_name
 
     @property
+    def unique_id(self) -> str|None:
+        """Return name of the sensor."""
+        return self._attr_unique_id
+
+    @property
     def is_on(self):
         """Return true if device is on."""
-        return self._state
+        return self._state != self._invert_logic
 
     def turn_on(self, **kwargs):
         """Turn the device on."""
-        # write_output(self._port, 0 if self._invert_logic else 1)
         value = Value.INACTIVE if self._invert_logic else Value.ACTIVE
         _LOGGER.debug(f"write_output: { self._port }, {value}")
         self.hass.data[DOMAIN]['lines'].set_value(self._port, value)
         self._state = True
-        self.schedule_update_ha_state()
+        self.schedule_update_ha_state(False)
 
     def turn_off(self, **kwargs):
         """Turn the device off."""
-        # write_output(self._port, 1 if self._invert_logic else 0)
         value = Value.ACTIVE if self._invert_logic else Value.INACTIVE
         _LOGGER.debug(f"write_output: { self._port }, {value}")
         self.hass.data[DOMAIN]['lines'].set_value(self._port, value)
         self._state = False
-        self.schedule_update_ha_state()
+        self.schedule_update_ha_state(False)
