@@ -2,7 +2,7 @@
 
 **This is a spin-off from the [ha-rpi_gpio](https://github.com/thecode/ha-rpi_gpio) integration, adapted to work with libgpiod2 instead.**
 
-The `gpio` integration supports the following platforms: `Binary Sensor`, `Cover`, `Switch`
+The `gpio` integration supports the following platforms: `Binary Sensor` and `Switch`
 
 # Installation
 
@@ -11,6 +11,15 @@ The `gpio` integration supports the following platforms: `Binary Sensor`, `Cover
 Copy the `gpio` folder and all of its contents into your Home Assistant's `custom_components` folder. This folder is usually inside your `/config` folder. If you are running Hass.io, use SAMBA to copy the folder over. You may need to create the `custom_components` folder and then copy the `gpio` folder and all of its contents into it.
 
 # Usage
+
+## Platform
+The `gpio` platform should be initialized using the path to the gpio chip. Default is `/dev/gpiochip0`. Add the following to your `configuration.yaml` file:
+
+```yaml
+# GPIO platform configuration
+gpio:
+  path: /dev/gpiochip0
+```
 
 ## Binary Sensor
 
@@ -60,6 +69,7 @@ binary_sensor:
 
 For more details about the Raspberry Pi GPIO layout, visit the Wikipedia [article](https://en.wikipedia.org/wiki/Raspberry_Pi#General_purpose_input-output_(GPIO)_connector) about the Raspberry Pi.
 
+<--
 ## Cover
 
 The `gpio` cover platform allows you to use your device to control your cover such as Garage doors.
@@ -118,6 +128,7 @@ cover:
 ### Remote GPIO Cover
 
 If you don't have Home Assistant running on your device and you want to use it as a remote cover instead, there is a project called [GarageQTPi](https://github.com/Jerrkawz/GarageQTPi) that will work remotely with the [MQTT Cover Component](/integrations/cover.mqtt/). Follow the GitHub instructions to install and configure GarageQTPi and once configured follow the Home Assistant instructions to configure the MQTT Cover.
+-->
 
 ## Switch
 

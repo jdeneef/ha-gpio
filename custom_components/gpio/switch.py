@@ -11,7 +11,6 @@ from homeassistant.const import (
     CONF_SWITCHES,
     CONF_UNIQUE_ID,
     DEVICE_DEFAULT_NAME,
-    EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
@@ -102,7 +101,7 @@ class GPIOSwitch(SwitchEntity):
         self._port = port
         self._invert_logic = invert_logic
         self._state = False
-        self.entity_id = generate_entity_id("sensor.{}", self._attr_name, [], self.hass)
+        self.entity_id = generate_entity_id("switch.{}", self._attr_name, [], self.hass)
 
     @property
     def name(self) -> str:
