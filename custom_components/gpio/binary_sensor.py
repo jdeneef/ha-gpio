@@ -160,7 +160,7 @@ class GPIOBinarySensor(BinarySensorEntity):
         self._bouncetime = bouncetime
         self._invert_logic = invert_logic
         self._state:bool | None = None
-        self.entity_id = generate_entity_id("sensor.gpio-{}", self._attr_name, [], self.hass)
+        self.entity_id = generate_entity_id("sensor.{}", self._attr_name, [], self.hass)
 
     @property
     def name(self) -> str:
