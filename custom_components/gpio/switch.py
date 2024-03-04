@@ -101,7 +101,7 @@ class GPIOSwitch(SwitchEntity):
         self._port = port
         self._invert_logic = invert_logic
         self._state = False
-        self.entity_id = generate_entity_id("switch.{}", self._attr_name, [], self.hass)
+        self.entity_id = generate_entity_id("switch.gpio-{}", self._attr_name, [], self.hass)
 
     @property
     def name(self) -> str:
